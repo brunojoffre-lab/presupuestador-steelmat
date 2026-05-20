@@ -1,12 +1,27 @@
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.spinner import Spinner
-from kivy.uix.textinput import TextInput
-from kivy.uix.button import Button
-from kivy.utils import get_color_from_hex
-from kivy.core.window import Window
+import streamlit as st
 
+# Configuración compacta para pantalla de celular
+st.set_page_config(page_title="STEELMAT Presupuestador", page_icon="🏗️", layout="centered")
+
+# Estilo visual Dark Tech / Premium de Steelmat
+st.markdown("""
+    <style>
+        .main { background-color: #0f172a; color: #f8fafc; }
+        h1 { color: #2dd4bf; text-align: center; font-family: 'Segoe UI', sans-serif; margin-bottom: 0px; }
+        .subtitle { color: #94a3b8; text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 25px; letter-spacing: 1px; }
+        div.stButton > button:first-child {
+            background-color: #14b8a6; color: white; width: 100%; 
+            font-weight: bold; border-radius: 8px; border: none; height: 48px; font-size: 16px;
+        }
+        div.stButton > button:first-child:hover { background-color: #0d9488; color: white; }
+        .res-box { 
+            background-color: #1e293b; padding: 18px; border-radius: 10px; 
+            border: 1px solid #334155; font-family: monospace; color: #e2e8f0; font-size: 14px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Base de datos original
 DATA_SOLUCIONES = [
     {"codigo": "1.1", "aplicacion": "Bajo Cubierta (Chapa)", "sistema": "Celulosa Proyectada", "espesor": "30 mm", "precio_m2": 13500},
     {"codigo": "1.2", "aplicacion": "Sobre cielorraso", "sistema": "Celulosa Soplada", "espesor": "100 mm", "precio_m2": 18000},
@@ -23,97 +38,60 @@ OPCIONES_DESCUENTOS = {
     "Descuento Empresa (10%)": 0.10
 }
 
-class PresupuestadorScreen(BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.orientation = 'vertical'
-        self.padding = [30, 40, 30, 40]
-        self.spacing = 15
-        
-        # Color de fondo Dark Industrial
-        Window.clearcolor = get_color_from_hex('#0f172a')
-        
-        # Encabezado
-        self.add_widget(Label(text="STEELMAT", font_size='28sp', bold=True, color=get_color_from_hex('#2dd4bf'), size_hint_y=None, height=40))
-        self.add_widget(Label(text="SISTEMAS DE AISLACIÓN INTELIGENTE", font_size='11sp', color=get_color_from_hex('#94a3b8'), size_hint_y=None, height=20))
-        
-        # 1. Selector Aplicación
-        self.add_widget(Label(text="1. Aplicación Recomendada:", font_size='14sp', bold=True, color=get_color_from_hex('#f1f5f9'), halign='left', size_hint_y=None, height=25))
-        apps_unicas = sorted(list(set(item["aplicacion"] for item in DATA_SOLUCIONES)))
-        self.spinner_app = Spinner(text="Seleccione Aplicación...", values=apps_unicas, background_color=get_color_from_hex('#1e293b'), color=get_color_from_hex('#ffffff'), size_hint_y=None, height=50)
-        self.spinner_app.bind(text=self.actualizar_espesores)
-        self.add_widget(self.spinner_app)
-        
-        # 2. Selector Espesor
-        self.add_widget(Label(text="2. Sistema y Espesor:", font_size='14sp', bold=True, color=get_color_from_hex('#f1f5f9'), halign='left', size_hint_y=None, height=25))
-        self.spinner_esp = Spinner(text="Primero elija aplicación...", values=[], disabled=True, background_color=get_color_from_hex('#1e293b'), color=get_color_from_hex('#ffffff'), size_hint_y=None, height=50)
-        self.spinner_esp.bind(text=self.guardar_seleccion)
-        self.add_widget(self.spinner_esp)
-        
-        # 3. Selector Descuento
-        self.add_widget(Label(text="3. Beneficio / Descuento:", font_size='14sp', bold=True, color=get_color_from_hex('#f1f5f9'), halign='left', size_hint_y=None, height=25))
-        self.spinner_desc = Spinner(text="Sin Descuento", values=list(OPCIONES_DESCUENTOS.keys()), background_color=get_color_from_hex('#1e293b'), color=get_color_from_hex('#ffffff'), size_hint_y=None, height=50)
-        self.add_widget(self.spinner_desc)
-        
-        # 4. Entrada M2
-        self.add_widget(Label(text="4. Superficie (m²):", font_size='14sp', bold=True, color=get_color_from_hex('#f1f5f9'), halign='left', size_hint_y=None, height=25))
-        self.input_m2 = TextInput(hint_text="Ej: 150", input_type='number', input_filter='float', multiline=False, background_color=get_color_from_hex('#1e293b'), foreground_color=get_color_from_hex('#ffffff'), size_hint_y=None, height=50, padding=[15, 12, 15, 12])
-        self.add_widget(self.input_m2)
-        
-        # Botón Calcular
-        self.btn_calcular = Button(text="CALCULAR PRESUPUESTO", font_size='16sp', bold=True, background_color=get_color_from_hex('#14b8a6'), background_normal='', color=get_color_from_hex('#ffffff'), size_hint_y=None, height=55)
-        self.btn_calcular.bind(on_press=self.calcular)
-        self.add_widget(self.btn_calcular)
-        
-        # Cuadro de Resultados
-        self.lbl_resultado = Label(text="Complete los datos superiores...", font_size='14sp', color=get_color_from_hex('#cbd5e1'), halign='center', valign='middle')
-        self.add_widget(self.lbl_resultado)
-        
-        self.items_filtrados = []
-        self.item_seleccionado = None
+st.markdown("<h1>STEELMAT</h1>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>SISTEMAS DE AISLACIÓN INTELIGENTE</p>", unsafe_allow_html=True)
 
-    def actualizar_espesores(self, spinner, text):
-        self.items_filtrados = [item for item in DATA_SOLUCIONES if item["aplicacion"] == text]
-        self.spinner_esp.values = [f"{i['sistema']} ({i['espesor']})" for i in self.items_filtrados]
-        self.spinner_esp.disabled = False
-        self.spinner_esp.text = "Seleccionar espesor..."
-        self.item_seleccionado = None
+# 1. Selección de Aplicación
+apps_unicas = sorted(list(set(item["aplicacion"] for item in DATA_SOLUCIONES)))
+app_sel = st.selectbox("1. Aplicación Recomendada:", ["Seleccione..."] + apps_unicas)
 
-    def guardar_seleccion(self, spinner, text):
-        for item in self.items_filtrados:
-            if f"{item['sistema']} ({item['espesor']})" == text:
-                self.item_seleccionado = item
-                break
+# 2. Selección de Sistema y Espesor
+if app_sel != "Seleccione...":
+    items_filtrados = [item for item in DATA_SOLUCIONES if item["aplicacion"] == app_sel]
+    opciones_esp = [f"{i['sistema']} ({i['espesor']})" for i in items_filtrados]
+    esp_sel = st.selectbox("2. Sistema y Espesor disponible:", opciones_esp)
+    item_seleccionado = next(i for i in items_filtrados if f"{i['sistema']} ({i['espesor']})" == esp_sel)
+    st.caption(f"Código: {item_seleccionado['codigo']}  |  Precio: ${item_seleccionado['precio_m2']:,} / m²")
+else:
+    st.selectbox("2. Sistema y Espesor disponible:", ["Primero elija aplicación..."], disabled=True)
+    item_seleccionado = None
 
-    def calcular(self, instance):
-        if not self.item_seleccionado:
-            self.lbl_resultado.text = "Error: Seleccione Aplicación y Espesor."
-            return
+# 3 y 4. Inputs en paralelo
+col1, col2 = st.columns(2)
+with col1:
+    desc_sel = st.selectbox("3. Beneficio / Desc:", list(OPCIONES_DESCUENTOS.keys()))
+with col2:
+    m2_input = st.text_input("4. Superficie (m²):", placeholder="Ej: 150")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+if st.button("CALCULAR PRESUPUESTO"):
+    if not item_seleccionado:
+        st.error("Falta seleccionar la aplicación y espesor técnica.")
+    elif not m2_input:
+        st.error("Ingrese los metros cuadrados.")
+    else:
         try:
-            m2 = float(self.input_m2.text.replace(",", "."))
+            m2 = float(m2_input.replace(",", "."))
             if m2 <= 0: raise ValueError
+            
+            subtotal = m2 * item_seleccionado["precio_m2"]
+            descuento_monto = subtotal * OPCIONES_DESCUENTOS[desc_sel]
+            total = subtotal - descuento_monto
+            
+            st.markdown("**RESUMEN COMERCIAL**")
+            resumen = (
+                f"Configuración:   {item_seleccionado['aplicacion']}\n"
+                f"Solución Técnica:{item_seleccionado['sistema']} ({item_seleccionado['espesor']})\n"
+                f"Código Único:    [{item_seleccionado['codigo']}]\n"
+                f"-----------------------------------------\n"
+                f"Rendimiento:     {m2:,.2f} m²\n"
+                f"Precio Base:     ${item_seleccionado['precio_m2']:,} / m²\n"
+                f"Subtotal Neto:   ${subtotal:,.2f}\n"
+                f"Beneficio Aplic.:-${descuento_monto:,.2f} ({desc_sel})\n"
+                f"-----------------------------------------\n"
+                f"TOTAL ESTIMADO:  ${total:,.2f} ARS"
+            )
+            st.markdown(f"<pre class='res-box'>{resumen}</pre>", unsafe_allow_html=True)
         except ValueError:
-            self.lbl_resultado.text = "Error: Ingrese un número m² válido."
-            return
-
-        desc = OPCIONES_DESCUENTOS[self.spinner_desc.text]
-        subtotal = m2 * self.item_seleccionado["precio_m2"]
-        monto_desc = subtotal * desc
-        total = subtotal - monto_desc
-        
-        self.lbl_resultado.text = (
-            f"Configuración: {self.item_seleccionado['aplicacion']}\n"
-            f"Solución: {self.item_seleccionado['sistema']} ({self.item_seleccionado['espesor']})\n"
-            f"Rendimiento: {m2:,.2f} m² | Base: ${self.item_seleccionado['precio_m2']:,}/m²\n"
-            f"Subtotal: ${subtotal:,.2f}\n"
-            f"Descuento: -${monto_desc:,.2f}\n"
-            f"-----------------------------------------\n"
-            f"TOTAL ESTIMADO: ${total:,.2f} ARS"
-        )
-
-class SteelmatApp(App):
-    def build(self):
-        return PresupuestadorScreen()
-
-if __name__ == '__main__':
-    SteelmatApp().run()
+            st.error("Ingrese una superficie válida mayor a 0.")
