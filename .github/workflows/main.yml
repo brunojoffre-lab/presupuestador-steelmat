@@ -25,13 +25,7 @@ jobs:
         run: |
           pip3 install --user --upgrade buildozer cython virtualenv
 
-      - name: Compilar con Buildozer
+      - name: Compilar con Buildozer (Modo Detallado)
         run: |
           export PATH=$PATH:~/.local/bin
-          yes | buildozer android debug
-
-      - name: Subir Instalador APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Steelmat-Presupuestador-Celular
-          path: bin/*.apk
+          yes | buildozer -v android debug
