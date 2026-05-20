@@ -25,7 +25,7 @@ jobs:
         run: |
           pip3 install --user --upgrade buildozer cython virtualenv
 
-      - name: Compilar con Buildozer (Modo Detallado)
+      - name: Compilar APK Limpio
         run: |
           export PATH=$PATH:~/.local/bin
-          yes | buildozer -v android debug
+          buildozer android debug
