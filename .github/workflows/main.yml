@@ -1,16 +1,23 @@
-name: Build APK
+name: Build APK Premium
 on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      
+      - name: Get Buildozer Docker Image
+        run: docker pull docker.pkg.github.com/kivy/buildozer/buildozer:latest
+        continue-on-error: true
+
       - name: Build with Buildozer
-        uses: ArtemGovorov/buildozer-action@v1
+        uses: s0/buildozer-action@v1
         with:
           command: buildozer android debug
+          repository_txt: ""
+
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: Steelmat-APK
           path: bin/*.apk
